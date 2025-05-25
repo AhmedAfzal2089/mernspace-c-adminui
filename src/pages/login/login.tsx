@@ -1,7 +1,36 @@
-import { Card, Layout, Space, Form, Input, Checkbox, Button, Flex } from "antd";
+import {
+  Card,
+  Layout,
+  Space,
+  Form,
+  Input,
+  Checkbox,
+  Button,
+  Flex,
+  Alert,
+} from "antd";
 import { LockFilled, LockOutlined, UserOutlined } from "@ant-design/icons";
 import Logo from "../../components/icons/Logo";
+import { useMutation } from "@tanstack/react-query";
+import { Credentials } from "../../types";
+import { login } from "../../http/api";
+
+const loginUser = async (credentials: Credentials) => {
+  // this userData is coming from mutate which is called in form success
+  //server call logic
+  const { data } = await login(credentials); // axios return a object named data which have all the things which your server is returning
+  return data;
+};
+
 const LoginPage = () => {
+  const { mutate, isPending, isError, error } = useMutation({
+    mutationKey: ["login"],
+    mutationFn: loginUser,
+    onSuccess: async () => {
+      console.log("Login Successfully");
+    },
+  });
+
   return (
     <>
       <Layout
@@ -35,11 +64,21 @@ const LoginPage = () => {
           >
             <Form
               initialValues={{
-                username: "test",
-                password: "secret",
                 remember: true,
               }}
+              onFinish={(values) => {
+                //values give the form data on submit then we pass them to mutate then it is transferred to its function
+                mutate({ email: values.username, password: values.password });
+                console.log(values);
+              }}
             >
+              {isError && (
+                <Alert
+                  style={{ marginBottom: 24 }}
+                  type="error"
+                  message={error?.message}
+                />
+              )}
               <Form.Item
                 name="username"
                 rules={[
@@ -79,6 +118,7 @@ const LoginPage = () => {
                   type="primary"
                   htmlType="submit"
                   style={{ width: "100% " }}
+                  loading={isPending}
                 >
                   Log in
                 </Button>
