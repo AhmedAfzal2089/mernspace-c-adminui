@@ -47,7 +47,7 @@ const LoginPage = () => {
             <Logo />
           </Layout.Content>
           <Card
-            bordered={false}
+            variant="borderless"
             style={{ width: 300 }}
             title={
               <Space
@@ -113,7 +113,7 @@ const LoginPage = () => {
                   Forgot password
                 </a>
               </Flex>
-              <Form.Item name="password">
+              <Form.Item>
                 <Button
                   type="primary"
                   htmlType="submit"
