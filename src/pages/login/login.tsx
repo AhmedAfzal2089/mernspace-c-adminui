@@ -32,6 +32,7 @@ const getSelf = async () => {
 const LoginPage = () => {
   const { isAllowed } = usePermission();
   const { setUser, logout: logoutFromStore } = useAuthStore();
+
   const { refetch } = useQuery({
     queryKey: ["self"],
     queryFn: getSelf,
