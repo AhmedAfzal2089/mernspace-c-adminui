@@ -18,7 +18,7 @@ import { useAuthStore } from "../../store";
 import { usePermission } from "../../hooks/usePermissions";
 
 const loginUser = async (credentials: Credentials) => {
-  // this userData is coming from mutate which is called in form success
+  // this userData(credentials) is coming from mutate which is called in form success
   //server call logic
   const { data } = await login(credentials); // axios return a object named data which have all the things which your server is returning
   return data;
@@ -38,6 +38,15 @@ const LoginPage = () => {
     enabled: false, //it will not call automatically when the component render
   });
 
+  // we make mutate function of every post req
+  const { mutate: logoutMutate } = useMutation({
+    mutationKey: ["logout"],
+    mutationFn: logout,
+    onSuccess: async () => {
+      logoutFromStore();
+      return;
+    },
+  });
   const { mutate, isPending, isError, error } = useMutation({
     mutationKey: ["login"],
     mutationFn: loginUser,
@@ -50,17 +59,9 @@ const LoginPage = () => {
       //window.local.href = "http://clientui/url"
 
       if (!isAllowed(selfUserData.data)) {
-        await logout();
-        logoutFromStore();
-        return;
+        logoutMutate();
+        return; // returning so setUser dont call
       }
-
-      // if (selfUserData.data.role === "customer") {
-      //   await logout();
-      //   logoutFromStore();
-      //   return;
-      // }
-      //store in the state
       setUser(selfUserData.data);
     },
   });
