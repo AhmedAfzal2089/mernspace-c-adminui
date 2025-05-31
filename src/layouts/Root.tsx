@@ -18,8 +18,10 @@ const Root = () => {
     retry: (failureCount: number, error) => {
       if (error instanceof AxiosError && error?.response?.status === 401) {
         return false;
+        // it will check only once if error is 401 , means it dont get userData from /self
       }
       return failureCount < 3;
+      //if any other errror then it will check 3 times
     },
   });
 
