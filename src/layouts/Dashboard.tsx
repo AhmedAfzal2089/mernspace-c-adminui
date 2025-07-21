@@ -51,8 +51,8 @@ const items = [
 ];
 
 const Dashboard = () => {
-   const {logout: logoutFromStore } = useAuthStore();
-    const { mutate: logoutMutate } = useMutation({
+  const { logout: logoutFromStore } = useAuthStore();
+  const { mutate: logoutMutate } = useMutation({
     mutationKey: ["logout"],
     mutationFn: logout,
     onSuccess: async () => {
@@ -96,7 +96,13 @@ const Dashboard = () => {
             }}
           >
             <Flex gap="middle" align="start" justify="space-between">
-              <Badge text="Global" status="success" />
+              <Badge
+                // checking if user is admin or other tenant
+                text={
+                  user.role === "admin" ? "You are an admin" : user.tenant?.name
+                }
+                status="success"
+              />
               <Space size={16}>
                 <Badge dot={true}>
                   <BellFilled />
@@ -107,7 +113,7 @@ const Dashboard = () => {
                       {
                         key: "logout",
                         label: "Logout",
-                        onClick:()=>logoutMutate(),
+                        onClick: () => logoutMutate(),
                       },
                     ],
                   }}
