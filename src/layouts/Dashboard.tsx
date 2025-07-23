@@ -22,35 +22,49 @@ import { useMutation } from "@tanstack/react-query";
 import { logout } from "../http/api";
 const { Sider, Header, Content, Footer } = Layout;
 
-const items = [
-  {
-    key: "/",
-    icon: <Icon component={Home} />,
-    label: <NavLink to="/">Home</NavLink>,
-  },
-  {
-    key: "/users",
-    icon: <Icon component={UserIcon} />,
-    label: <NavLink to="/users">Users</NavLink>,
-  },
-  {
-    key: "/restaurants",
-    icon: <Icon component={foodIcon} />,
-    label: <NavLink to="/restaurants">Restaurants</NavLink>,
-  },
-  {
-    key: "/products",
-    icon: <Icon component={BasketIcon} />,
-    label: <NavLink to="/products">Products</NavLink>,
-  },
-  {
-    key: "/promos",
-    icon: <Icon component={GiftIcon} />,
-    label: <NavLink to="/promos">Promos</NavLink>,
-  },
-];
+const getMenuItems = (role: string) => {
+  const baseItems = [
+    {
+      key: "/",
+      icon: <Icon component={Home} />,
+      label: <NavLink to="/">Home</NavLink>,
+    },
+    {
+      key: "/restaurants",
+      icon: <Icon component={foodIcon} />,
+      label: <NavLink to="/restaurants">Restaurants</NavLink>,
+    },
+    {
+      key: "/products",
+      icon: <Icon component={BasketIcon} />,
+      label: <NavLink to="/products">Products</NavLink>,
+    },
+    {
+      key: "/promos",
+      icon: <Icon component={GiftIcon} />,
+      label: <NavLink to="/promos">Promos</NavLink>,
+      // can use priority field here and then sort it , so no need of splice
+    },
+  ];
+
+  // splice method changes the existing array not return new array like map etc
+
+  if (role === "admin") {
+    const menus = [...baseItems];
+    menus.splice(1, 0, {
+      key: "/users",
+      icon: <Icon component={UserIcon} />,
+      label: <NavLink to="/users">Users</NavLink>,
+    });
+
+    return menus;
+  }
+  return baseItems;
+};
 
 const Dashboard = () => {
+  // useAuthStore provides us a hook , which only can be used in the component which is "dashboard" in this case
+
   const { logout: logoutFromStore } = useAuthStore();
   const { mutate: logoutMutate } = useMutation({
     mutationKey: ["logout"],
@@ -64,10 +78,13 @@ const Dashboard = () => {
   const {
     token: { colorBgContainer },
   } = theme.useToken(); // theme coming from main.tsx
+
+  // call getself
   const { user } = useAuthStore();
   if (user === null) {
     return <Navigate to="/auth/login" replace={true} />;
   }
+  const items = getMenuItems(user?.role);
   return (
     <div>
       <Layout style={{ minHeight: "100vh" }}>
