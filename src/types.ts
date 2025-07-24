@@ -20,6 +20,11 @@ export type CreateUserData = {
   tenantId: number;
 };
 
+export type CreateTenantData = {
+  name: string;
+  address: string;
+};
+
 export type Tenant = {
   id: number;
   address: string;
