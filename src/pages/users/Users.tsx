@@ -1,4 +1,4 @@
-import { Breadcrumb, Table, Space, Drawer, Button } from "antd";
+import { Breadcrumb, Table, Space, Drawer, Button, theme, Form } from "antd";
 import { PlusOutlined, RightOutlined } from "@ant-design/icons";
 import { Link, Navigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -7,6 +7,7 @@ import { User } from "../../types";
 import { useAuthStore } from "../../store";
 import UsersFilter from "./UsersFilter";
 import { useState } from "react";
+import UserForm from "./forms/UserForm";
 const columns = [
   {
     title: "ID",
@@ -37,6 +38,9 @@ const columns = [
   },
 ];
 const Users = () => {
+  const {
+    token: { colorBgLayout },
+  } = theme.useToken(); // theme coming from main.tsx
   const [DrawerOpen, setDrawerOpen] = useState(false);
 
   const {
@@ -81,6 +85,7 @@ const Users = () => {
         <Drawer
           title="Create User"
           width={720}
+          styles={{ body: { background: colorBgLayout } }}
           open={DrawerOpen}
           destroyOnHidden={true}
           onClose={() => {
@@ -93,10 +98,10 @@ const Users = () => {
             </Space>
           }
         >
-          <p>Some Content </p>
-          <p>Some Content </p>
-          <p>Some Content </p>
-          <p>Some Content </p>
+          {/* // on submission we want data here so wrapping it on parent component */}
+          <Form layout="vertical">
+            <UserForm />
+          </Form>
         </Drawer>
       </Space>
     </>
