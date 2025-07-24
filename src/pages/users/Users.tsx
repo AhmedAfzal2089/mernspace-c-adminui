@@ -1,9 +1,9 @@
 import { Breadcrumb, Table, Space, Drawer, Button, theme, Form } from "antd";
 import { PlusOutlined, RightOutlined } from "@ant-design/icons";
 import { Link, Navigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { getUsers } from "../../http/api";
-import { User } from "../../types";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { createUser, getUsers } from "../../http/api";
+import { CreateUserData, User } from "../../types";
 import { useAuthStore } from "../../store";
 import UsersFilter from "./UsersFilter";
 import { useState } from "react";
@@ -38,6 +38,26 @@ const columns = [
   },
 ];
 const Users = () => {
+  const [form] = Form.useForm();
+  const queryClient = useQueryClient();
+  // we make mutate function of every post req
+  const { mutate: userMutate } = useMutation({
+    mutationKey: ["user"],
+    mutationFn: async (data: CreateUserData) =>
+      createUser(data).then((res) => res.data),
+    // refetching the users after creating a new user
+    onSuccess: async () => {
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+      return;
+    },
+  });
+
+  const onHandleSubmit = async () => {
+    await form.validateFields();
+    await userMutate(form.getFieldsValue());
+    form.resetFields();
+    setDrawerOpen(false);
+  };
   const {
     token: { colorBgLayout },
   } = theme.useToken(); // theme coming from main.tsx
@@ -89,17 +109,28 @@ const Users = () => {
           open={DrawerOpen}
           destroyOnHidden={true}
           onClose={() => {
+            form.resetFields();
             setDrawerOpen(false);
           }}
           extra={
             <Space>
-              <Button>Cancel</Button>
-              <Button type="primary">Submit</Button>
+              <Button
+                onClick={() => {
+                  form.resetFields();
+                  setDrawerOpen(false);
+                }}
+              >
+                Cancel
+              </Button>
+              <Button type="primary" onClick={onHandleSubmit}>
+                Submit
+              </Button>
             </Space>
           }
         >
           {/* // on submission we want data here so wrapping it on parent component */}
-          <Form layout="vertical">
+          {/* form={form} is coming from the above component */}
+          <Form layout="vertical" form={form}>
             <UserForm />
           </Form>
         </Drawer>
