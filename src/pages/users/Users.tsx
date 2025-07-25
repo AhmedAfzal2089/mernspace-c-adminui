@@ -8,6 +8,7 @@ import { useAuthStore } from "../../store";
 import UsersFilter from "./UsersFilter";
 import { useState } from "react";
 import UserForm from "./forms/UserForm";
+import { PER_PAGE } from "../../constants";
 const columns = [
   {
     title: "ID",
@@ -38,6 +39,10 @@ const columns = [
   },
 ];
 const Users = () => {
+  const [queryParams, setQueryParams] = useState({
+    perPage: PER_PAGE,
+    currentPage: 1,
+  });
   const [form] = Form.useForm();
   const queryClient = useQueryClient();
   // we make mutate function of every post req
@@ -69,9 +74,13 @@ const Users = () => {
     isError,
     error,
   } = useQuery({
-    queryKey: ["users"],
+    // if any of the key changes it again refetches the users
+    queryKey: ["users", queryParams],
     queryFn: () => {
-      return getUsers().then((res) => res.data);
+      const queryString = new URLSearchParams(
+        queryParams as unknown as Record<string, string>
+      ).toString();
+      return getUsers(queryString).then((res) => res.data);
     },
   });
   const { user } = useAuthStore();
@@ -101,7 +110,26 @@ const Users = () => {
             Add User
           </Button>
         </UsersFilter>
-        <Table columns={columns} dataSource={users} rowKey="id" />
+        <Table
+          columns={columns}
+          dataSource={users?.data}
+          rowKey={"id"}
+          pagination={{
+            total: users?.total,
+            pageSize: queryParams.perPage,
+            current: queryParams.currentPage,
+            onChange: (page) => {
+              console.log(page);
+              //changing state by function bcz we need previous data in this
+              setQueryParams((prev) => {
+                return {
+                  ...prev,
+                  currentPage: page,
+                };
+              });
+            },
+          }}
+        />
         <Drawer
           title="Create User"
           width={720}
