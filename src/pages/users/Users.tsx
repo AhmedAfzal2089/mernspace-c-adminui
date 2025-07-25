@@ -29,6 +29,9 @@ import UsersFilter from "./UsersFilter";
 import { useState } from "react";
 import UserForm from "./forms/UserForm";
 import { PER_PAGE } from "../../constants";
+import { debounce } from "lodash";
+import React from "react";
+
 const columns = [
   {
     title: "ID",
@@ -109,6 +112,12 @@ const Users = () => {
     placeholderData: keepPreviousData, // this is fixing ui jumping issue
   });
 
+  const debouncedQUpdate = React.useMemo(() => {
+    return debounce((value: string | undefined) => {
+      setQueryParams((prev) => ({ ...prev, q: value }));
+    }, 1000);
+  }, []);
+
   const onFilterChange = (changedFields: FieldData[]) => {
     // console.log(changedFields);
 
@@ -120,10 +129,16 @@ const Users = () => {
         };
       })
       .reduce((acc, item) => ({ ...acc, ...item }), {});
-    setQueryParams((prev) => ({
-      ...prev,
-      ...changedFilterFields,
-    }));
+
+    if ("q" in changedFilterFields) {
+      debouncedQUpdate(changedFilterFields.q);
+    } else {
+      setQueryParams((prev) => ({
+        ...prev,
+        ...changedFilterFields,
+      }));
+    }
+
     console.log(changedFilterFields);
   };
 
