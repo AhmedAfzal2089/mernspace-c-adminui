@@ -23,7 +23,7 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { createUser, getUsers } from "../../http/api";
-import { CreateUserData, User } from "../../types";
+import { CreateUserData, FieldData, User } from "../../types";
 import { useAuthStore } from "../../store";
 import UsersFilter from "./UsersFilter";
 import { useState } from "react";
@@ -59,11 +59,12 @@ const columns = [
   },
 ];
 const Users = () => {
+  const [form] = Form.useForm();
+  const [filterForm] = Form.useForm();
   const [queryParams, setQueryParams] = useState({
     perPage: PER_PAGE,
     currentPage: 1,
   });
-  const [form] = Form.useForm();
   const queryClient = useQueryClient();
   // we make mutate function of every post req
   const { mutate: userMutate } = useMutation({
@@ -97,13 +98,35 @@ const Users = () => {
     // if any of the key changes it again refetches the users
     queryKey: ["users", queryParams],
     queryFn: () => {
+      const filteredParams = Object.fromEntries(
+        Object.entries(queryParams).filter((item) => !!item[1])
+      );
       const queryString = new URLSearchParams(
-        queryParams as unknown as Record<string, string>
+        filteredParams as unknown as Record<string, string>
       ).toString();
       return getUsers(queryString).then((res) => res.data);
     },
     placeholderData: keepPreviousData, // this is fixing ui jumping issue
   });
+
+  const onFilterChange = (changedFields: FieldData[]) => {
+    // console.log(changedFields);
+
+    // data is coming like an array and there are multiple objects for q and role , which we have to send it on backed , so we are filtering
+    const changedFilterFields = changedFields
+      .map((item) => {
+        return {
+          [item.name[0]]: item.value,
+        };
+      })
+      .reduce((acc, item) => ({ ...acc, ...item }), {});
+    setQueryParams((prev) => ({
+      ...prev,
+      ...changedFilterFields,
+    }));
+    console.log(changedFilterFields);
+  };
+
   const { user } = useAuthStore();
   if (user?.role !== "admin") {
     return <Navigate to="/" replace={true} />;
@@ -129,19 +152,18 @@ const Users = () => {
             <Typography.Text type="danger">{error.message}</Typography.Text>
           )}
         </Flex>
-        <UsersFilter
-          onFilterChange={(filterName: string, filterValue: string) => {
-            console.log(filterName, filterValue);
-          }}
-        >
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={() => setDrawerOpen(true)}
-          >
-            Add User
-          </Button>
-        </UsersFilter>
+        <Form form={filterForm} onFieldsChange={onFilterChange}>
+          <UsersFilter>
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              onClick={() => setDrawerOpen(true)}
+            >
+              Add User
+            </Button>
+          </UsersFilter>
+        </Form>
+
         <Table
           columns={columns}
           dataSource={users?.data}
