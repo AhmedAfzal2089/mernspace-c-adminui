@@ -48,7 +48,7 @@ const Tenants = () => {
       createTenant(data).then((res) => res.data),
     // refetching the users after creating a new user
     onSuccess: async () => {
-      queryClient.invalidateQueries({ queryKey: ["users"] });
+      queryClient.invalidateQueries({ queryKey: ["tenants"] });
       return;
     },
   });
