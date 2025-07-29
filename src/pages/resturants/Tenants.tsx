@@ -3,11 +3,12 @@ import { RightOutlined, PlusOutlined } from "@ant-design/icons";
 import { Link, Navigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "../../store";
-import React from "react";
+import React, { useState } from "react";
 import TenantFilter from "./TenantFilter";
 import { createTenant, getTenants } from "../../http/api";
 import TenantForm from "./forms/TenantForm";
 import { CreateTenantData } from "../../types";
+import { PER_PAGE } from "../../constants";
 
 const columns = [
   {
@@ -30,6 +31,10 @@ const columns = [
 const Tenants = () => {
   const [form] = Form.useForm();
   const queryClient = useQueryClient();
+  const [queryParams, setQueryParams] = useState({
+    perPage: PER_PAGE,
+    currentPage: 1,
+  });
   const [drawerOpen, setDrawerOpen] = React.useState(false);
   const {
     data: tenants,
@@ -37,9 +42,12 @@ const Tenants = () => {
     isError,
     error,
   } = useQuery({
-    queryKey: ["tenants"],
+    queryKey: ["tenants", queryParams],
     queryFn: () => {
-      return getTenants().then((res) => res.data);
+      const queryString = new URLSearchParams(
+        queryParams as unknown as Record<string, string>
+      ).toString();
+      return getTenants(queryString).then((res) => res.data);
     },
   });
   const { mutate: TenantMutate } = useMutation({
@@ -94,7 +102,26 @@ const Tenants = () => {
           </Button>
         </TenantFilter>
 
-        <Table columns={columns} dataSource={tenants} rowKey={"id"} />
+        <Table
+          columns={columns}
+          dataSource={tenants?.data}
+          rowKey={"id"}
+          pagination={{
+            total: tenants?.total,
+            pageSize: queryParams.perPage,
+            current: queryParams.currentPage,
+            onChange: (page) => {
+              // console.log(page);
+              //changing state by function bcz we need previous data in this
+              setQueryParams((prev) => {
+                return {
+                  ...prev,
+                  currentPage: page,
+                };
+              });
+            },
+          }}
+        />
 
         <Drawer
           title="Create Restaurant"
