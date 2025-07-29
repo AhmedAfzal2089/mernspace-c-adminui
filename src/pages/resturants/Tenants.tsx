@@ -1,5 +1,20 @@
-import { Breadcrumb, Button, Drawer, Flex, Form, Space, Spin, Table, theme, Typography } from "antd";
-import { RightOutlined, PlusOutlined, LoadingOutlined } from "@ant-design/icons";
+import {
+  Breadcrumb,
+  Button,
+  Drawer,
+  Flex,
+  Form,
+  Space,
+  Spin,
+  Table,
+  theme,
+  Typography,
+} from "antd";
+import {
+  RightOutlined,
+  PlusOutlined,
+  LoadingOutlined,
+} from "@ant-design/icons";
 import { Link, Navigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "../../store";
@@ -7,8 +22,9 @@ import React, { useState } from "react";
 import TenantFilter from "./TenantFilter";
 import { createTenant, getTenants } from "../../http/api";
 import TenantForm from "./forms/TenantForm";
-import { CreateTenantData } from "../../types";
+import { CreateTenantData, FieldData } from "../../types";
 import { PER_PAGE } from "../../constants";
+import { debounce } from "lodash";
 
 const columns = [
   {
@@ -30,6 +46,7 @@ const columns = [
 
 const Tenants = () => {
   const [form] = Form.useForm();
+  const [filterForm] = Form.useForm();
   const queryClient = useQueryClient();
   const [queryParams, setQueryParams] = useState({
     perPage: PER_PAGE,
@@ -67,6 +84,26 @@ const Tenants = () => {
     form.resetFields();
     setDrawerOpen(false);
   };
+
+  const debouncedQUpdate = React.useMemo(() => {
+    return debounce((value: string | undefined) => {
+      setQueryParams((prev) => ({ ...prev, q: value }));
+    }, 500);
+  }, []);
+
+  const onFilterChange = (changedFields: FieldData[]) => {
+    const changedFilterFields = changedFields
+      .map((item) => ({
+        [item.name[0]]: item.value,
+      }))
+      .reduce((acc, item) => ({ ...acc, ...item }), {});
+
+    if ("q" in changedFilterFields) {
+      debouncedQUpdate(changedFilterFields.q);
+    } else {
+      setQueryParams((prev) => ({ ...prev, ...changedFilterFields }));
+    }
+  };
   const { user } = useAuthStore();
 
   if (user?.role !== "admin") {
@@ -78,12 +115,12 @@ const Tenants = () => {
   return (
     <>
       <Space direction="vertical" size="large" style={{ width: "100%" }}>
-       <Flex justify="space-between">
+        <Flex justify="space-between">
           <Breadcrumb
             separator={<RightOutlined />}
             items={[
               { title: <Link to="/">Dashboard</Link> },
-              { title: "Users" },
+              { title: "Restaurants" },
             ]}
           />
           {isFetching && (
@@ -95,20 +132,17 @@ const Tenants = () => {
             <Typography.Text type="danger">{error.message}</Typography.Text>
           )}
         </Flex>
-
-        <TenantFilter
-          onFilterChange={(filterName: string, filterValue: string) => {
-            console.log(filterName, filterValue);
-          }}
-        >
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={() => setDrawerOpen(true)}
-          >
-            Add Restaurant
-          </Button>
-        </TenantFilter>
+        <Form form={filterForm} onFieldsChange={onFilterChange}>
+          <TenantFilter>
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              onClick={() => setDrawerOpen(true)}
+            >
+              Add Restaurant
+            </Button>
+          </TenantFilter>
+        </Form>
 
         <Table
           columns={columns}
