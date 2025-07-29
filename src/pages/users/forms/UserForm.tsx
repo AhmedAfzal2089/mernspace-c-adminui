@@ -7,9 +7,10 @@ const UserForm = () => {
   const { data: tenant } = useQuery({
     queryKey: ["tenant"],
     queryFn: () => {
-      return getTenants().then((res) => res.data);
+      return getTenants(`currentPage=1&perPage=100`).then((res) => res.data);
     },
   });
+  const tenantList: Tenant[] = tenant?.data ?? [];
   return (
     <Row>
       <Col span={24}>
@@ -102,7 +103,7 @@ const UserForm = () => {
                     onChange={() => {}}
                     placeholder="Select Restaurant"
                   >
-                    {tenant?.map((tenant: Tenant) => (
+                    {tenantList?.map((tenant: Tenant) => (
                       <Select.Option value={tenant.id} key={tenant.id}>
                         {tenant.name}
                       </Select.Option>
