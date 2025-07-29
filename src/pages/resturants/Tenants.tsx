@@ -91,7 +91,7 @@ const Tenants = () => {
 
   const debouncedQUpdate = React.useMemo(() => {
     return debounce((value: string | undefined) => {
-      setQueryParams((prev) => ({ ...prev, q: value , currentPage:1}));
+      setQueryParams((prev) => ({ ...prev, q: value, currentPage: 1 }));
     }, 500);
   }, []);
 
@@ -158,6 +158,9 @@ const Tenants = () => {
                   currentPage: page,
                 };
               });
+            },
+            showTotal: (total: number, range: number[]) => {
+              return `Showing${range[0]}-${range[1]} of ${total} items`;
             },
           }}
         />

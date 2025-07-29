@@ -122,7 +122,7 @@ const Users = () => {
 
   const debouncedQUpdate = React.useMemo(() => {
     return debounce((value: string | undefined) => {
-      setQueryParams((prev) => ({ ...prev, q: value, currentPage:1 }));
+      setQueryParams((prev) => ({ ...prev, q: value, currentPage: 1 }));
     }, 500);
   }, []);
 
@@ -206,6 +206,9 @@ const Users = () => {
                 };
               });
             },
+              showTotal: (total: number, range: number[]) => {
+                return `Showing${range[0]}-${range[1]} of ${total} items`;
+              },
           }}
         />
         <Drawer
