@@ -22,11 +22,11 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-import { createUser, getUsers } from "../../http/api";
+import { createUser, getUsers, updateUser } from "../../http/api";
 import { CreateUserData, FieldData, User } from "../../types";
 import { useAuthStore } from "../../store";
 import UsersFilter from "./UsersFilter";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import UserForm from "./forms/UserForm";
 import { PER_PAGE } from "../../constants";
 import { debounce } from "lodash";
@@ -70,6 +70,9 @@ const columns = [
   },
 ];
 const Users = () => {
+  const [currentEditingUser, setCurrentEditingUser] = useState<User | null>(
+    null
+  );
   const [form] = Form.useForm();
   const [filterForm] = Form.useForm();
   const [queryParams, setQueryParams] = useState({
@@ -88,17 +91,45 @@ const Users = () => {
       return;
     },
   });
+  const { mutate: updateUserMutation } = useMutation({
+    mutationKey: ["update-user"],
+    mutationFn: async (data: CreateUserData) =>
+      updateUser(data, currentEditingUser!.id).then((res) => res.data),
+    // refetching the users after creating a new user
+    onSuccess: async () => {
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+      return;
+    },
+  });
 
   const onHandleSubmit = async () => {
     await form.validateFields();
-    await userMutate(form.getFieldsValue());
+    const isEditMode = !!currentEditingUser;
+    if (isEditMode) {
+      // console.log("Updating...");
+      await updateUserMutation(form.getFieldsValue());
+    } else {
+      // console.log("Creating ...");
+      await userMutate(form.getFieldsValue());
+    }
     form.resetFields();
+    setCurrentEditingUser(null);
     setDrawerOpen(false);
   };
   const {
     token: { colorBgLayout },
   } = theme.useToken(); // theme coming from main.tsx
   const [DrawerOpen, setDrawerOpen] = useState(false);
+
+  useEffect(() => {
+    if (currentEditingUser) {
+      setDrawerOpen(true);
+      form.setFieldsValue({
+        ...currentEditingUser,
+        tenantId: currentEditingUser.tenant?.id,
+      });
+    }
+  }, [currentEditingUser, form]);
 
   const {
     data: users,
@@ -189,7 +220,24 @@ const Users = () => {
         </Form>
 
         <Table
-          columns={columns}
+          columns={[
+            ...columns,
+            {
+              title: "Actions",
+              render: (_: string, record: User) => {
+                return (
+                  <Space>
+                    <Button
+                      type="link"
+                      onClick={() => setCurrentEditingUser(record)}
+                    >
+                      Edit
+                    </Button>
+                  </Space>
+                );
+              },
+            },
+          ]}
           dataSource={users?.data}
           rowKey={"id"}
           pagination={{
@@ -206,19 +254,20 @@ const Users = () => {
                 };
               });
             },
-              showTotal: (total: number, range: number[]) => {
-                return `Showing${range[0]}-${range[1]} of ${total} items`;
-              },
+            showTotal: (total: number, range: number[]) => {
+              return `Showing${range[0]}-${range[1]} of ${total} items`;
+            },
           }}
         />
         <Drawer
-          title="Create User"
+          title={currentEditingUser ? "Edit User" : "Create User"}
           width={720}
           styles={{ body: { background: colorBgLayout } }}
           open={DrawerOpen}
           destroyOnHidden={true}
           onClose={() => {
             form.resetFields();
+            setCurrentEditingUser(null);
             setDrawerOpen(false);
           }}
           extra={
@@ -240,7 +289,7 @@ const Users = () => {
           {/* // on submission we want data here so wrapping it on parent component */}
           {/* form={form} is coming from the above component */}
           <Form layout="vertical" form={form}>
-            <UserForm />
+            <UserForm isEditMode={!!currentEditingUser} />
           </Form>
         </Drawer>
       </Space>

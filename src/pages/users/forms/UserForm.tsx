@@ -3,7 +3,7 @@ import { Card, Col, Form, Input, Row, Select, Space } from "antd";
 import { getTenants } from "../../../http/api";
 import { Tenant } from "../../../types";
 
-const UserForm = () => {
+const UserForm = ({ isEditMode = false }: { isEditMode: boolean }) => {
   const { data: tenant } = useQuery({
     queryKey: ["tenant"],
     queryFn: () => {
@@ -54,19 +54,24 @@ const UserForm = () => {
               </Col>
             </Row>
           </Card>
-          <Card title="Security Info" variant="borderless">
-            <Row gutter={20}>
-              <Col span={12}>
-                <Form.Item
-                  label="Password"
-                  name="password"
-                  rules={[{ required: true, message: "Password Is Required" }]}
-                >
-                  <Input type="password" size="large" />
-                </Form.Item>
-              </Col>
-            </Row>
-          </Card>
+          {!isEditMode && (
+            <Card title="Security Info" variant="borderless">
+              <Row gutter={20}>
+                <Col span={12}>
+                  <Form.Item
+                    label="Password"
+                    name="password"
+                    rules={[
+                      { required: true, message: "Password Is Required" },
+                    ]}
+                  >
+                    <Input type="password" size="large" />
+                  </Form.Item>
+                </Col>
+              </Row>
+            </Card>
+          )}
+
           <Card title="Role" variant="borderless">
             <Row gutter={20}>
               <Col span={12}>
@@ -76,6 +81,7 @@ const UserForm = () => {
                   rules={[{ required: true, message: "Role Is Required" }]}
                 >
                   <Select
+                    id="selectBoxInUserForm"
                     size="large"
                     style={{ width: "100%" }}
                     allowClear={true}
