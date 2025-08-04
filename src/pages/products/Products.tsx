@@ -5,19 +5,25 @@ import {
   Form,
   Image,
   Space,
+  Spin,
   Table,
   Tag,
   Typography,
 } from "antd";
 import { Link } from "react-router-dom";
-import { PlusOutlined, RightOutlined } from "@ant-design/icons";
+import {
+  LoadingOutlined,
+  PlusOutlined,
+  RightOutlined,
+} from "@ant-design/icons";
 import ProductsFilter from "./ProductsFilter";
-import { Product } from "../../types";
-import { useState } from "react";
-import { PER_PAGE } from "../../constants";
+import { FieldData, Product } from "../../types";
+import { useMemo, useState } from "react";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { getProducts } from "../../http/api";
 import { format } from "date-fns";
+import { debounce } from "lodash";
+import { PER_PAGE } from "../../constants";
 const columns = [
   {
     title: "Product Name",
@@ -68,8 +74,8 @@ const columns = [
 ];
 const Products = () => {
   const [queryParams, setQueryParams] = useState({
-    perPage: PER_PAGE,
-    currentPage: 1,
+    limit: PER_PAGE,
+    page: 1,
   });
   const {
     data: products,
@@ -93,6 +99,31 @@ const Products = () => {
   });
 
   const [filterForm] = Form.useForm();
+  const debouncedQUpdate = useMemo(() => {
+    return debounce((value: string | undefined) => {
+      setQueryParams((prev) => ({ ...prev, q: value, page: 1 }));
+    }, 500);
+  }, []);
+  const onFilterChange = (changedFields: FieldData[]) => {
+    // the data is coming in an array , so converting it into the object as key value pair
+    const changedFilterFields = changedFields
+      .map((item) => {
+        return {
+          [item.name[0]]: item.value,
+        };
+      })
+      .reduce((acc, item) => ({ ...acc, ...item }), {});
+    if ("q" in changedFilterFields) {
+      debouncedQUpdate(changedFilterFields.q);
+    } else {
+      setQueryParams((prev) => ({
+        ...prev,
+        ...changedFilterFields,
+        page: 1,
+      }));
+    }
+    console.log("changed Fields", changedFilterFields);
+  };
   return (
     <>
       <Space direction="vertical" size="large" style={{ width: "100%" }}>
@@ -104,8 +135,16 @@ const Products = () => {
               { title: "Products" },
             ]}
           />
+          {isFetching && (
+            <Spin
+              indicator={<LoadingOutlined style={{ fontSize: 24 }} spin />}
+            />
+          )}
+          {isError && (
+            <Typography.Text type="danger">{error.message}</Typography.Text>
+          )}
         </Flex>
-        <Form form={filterForm} onFieldsChange={() => {}}>
+        <Form form={filterForm} onFieldsChange={onFilterChange}>
           <ProductsFilter>
             <Button type="primary" icon={<PlusOutlined />} onClick={() => {}}>
               Add Product
@@ -132,15 +171,15 @@ const Products = () => {
           rowKey={"id"}
           pagination={{
             total: products?.total,
-            pageSize: queryParams.perPage,
-            current: queryParams.currentPage,
+            pageSize: queryParams.limit,
+            current: queryParams.page,
             onChange: (page) => {
               console.log(page);
               //changing state by function bcz we need previous data in this
               setQueryParams((prev) => {
                 return {
                   ...prev,
-                  currentPage: page,
+                  page: page,
                 };
               });
             },
