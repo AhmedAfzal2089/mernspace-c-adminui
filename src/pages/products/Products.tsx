@@ -1,6 +1,7 @@
 import {
   Breadcrumb,
   Button,
+  Drawer,
   Flex,
   Form,
   Image,
@@ -8,6 +9,7 @@ import {
   Spin,
   Table,
   Tag,
+  theme,
   Typography,
 } from "antd";
 import { Link } from "react-router-dom";
@@ -25,6 +27,7 @@ import { format } from "date-fns";
 import { debounce } from "lodash";
 import { PER_PAGE } from "../../constants";
 import { useAuthStore } from "../../store";
+import ProductForms from "./forms/ProductForms";
 const columns = [
   {
     title: "Product Name",
@@ -74,6 +77,8 @@ const columns = [
   },
 ];
 const Products = () => {
+  const [filterForm] = Form.useForm();
+  const [form] = Form.useForm();
   const { user } = useAuthStore();
   const [queryParams, setQueryParams] = useState({
     limit: PER_PAGE,
@@ -101,7 +106,6 @@ const Products = () => {
     placeholderData: keepPreviousData, // this is fixing ui jumping issue
   });
 
-  const [filterForm] = Form.useForm();
   const debouncedQUpdate = useMemo(() => {
     return debounce((value: string | undefined) => {
       setQueryParams((prev) => ({ ...prev, q: value, page: 1 }));
@@ -127,6 +131,13 @@ const Products = () => {
     }
     console.log("changed Fields", changedFilterFields);
   };
+  const {
+    token: { colorBgLayout },
+  } = theme.useToken(); // theme coming from main.tsx
+  const [DrawerOpen, setDrawerOpen] = useState(false);
+  const onHandleSubmit = () => {
+    console.log("submitting");
+  };
   return (
     <>
       <Space direction="vertical" size="large" style={{ width: "100%" }}>
@@ -149,7 +160,7 @@ const Products = () => {
         </Flex>
         <Form form={filterForm} onFieldsChange={onFilterChange}>
           <ProductsFilter>
-            <Button type="primary" icon={<PlusOutlined />} onClick={() => {}}>
+            <Button type="primary" icon={<PlusOutlined />} onClick={() => {setDrawerOpen(true)}}>
               Add Product
             </Button>
           </ProductsFilter>
@@ -191,6 +202,38 @@ const Products = () => {
             },
           }}
         />
+        <Drawer
+          title={"Add Product"}
+          width={720}
+          styles={{ body: { background: colorBgLayout } }}
+          open={DrawerOpen}
+          destroyOnHidden={true}
+          onClose={() => {
+            form.resetFields();
+            setDrawerOpen(false);
+          }}
+          extra={
+            <Space>
+              <Button
+                onClick={() => {
+                  form.resetFields();
+                  setDrawerOpen(false);
+                }}
+              >
+                Cancel
+              </Button>
+              <Button type="primary" onClick={onHandleSubmit}>
+                Submit
+              </Button>
+            </Space>
+          }
+        >
+          {/* // on submission we want data here so wrapping it on parent component */}
+          {/* form={form} is coming from the above component */}
+          <Form layout="vertical" form={form}>
+            <ProductForms />
+          </Form>
+        </Drawer>
       </Space>
     </>
   );
