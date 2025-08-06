@@ -180,7 +180,7 @@ const Products = () => {
     mutationFn: async (data: FormData) => {
       if (selectedProduct) {
         //edit mode
-        return updateProduct(selectedProduct._id, data).then((res) => res.data);
+        return updateProduct(data, selectedProduct._id).then((res) => res.data);
       } else {
         //create mode
         return createProduct(data).then((res) => res.data);

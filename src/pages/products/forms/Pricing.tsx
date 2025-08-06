@@ -8,7 +8,7 @@ type PricingProps = {
 };
 const Pricing = ({ selectedCategory }: PricingProps) => {
   const { data: fetchedCategory } = useQuery<Category>({
-    queryKey: ["categoryKey", selectedCategory],
+    queryKey: ["category", selectedCategory],
     queryFn: () => {
       return getCategory(selectedCategory).then((res) => res.data);
     },

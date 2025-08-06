@@ -27,13 +27,16 @@ export const getCategories = () => api.get(`${CATALOG_SERVICE}/categories`);
 export const getProducts = (queryParam: string) =>
   api.get(`${CATALOG_SERVICE}/products?${queryParam}`);
 
-export const createProduct = (product: FormData) =>
-  api.post(`${CATALOG_SERVICE}/products`, product);
+export const createProduct = (product: FormData) => {
+  return api.post(`${CATALOG_SERVICE}/products/`, product, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+};
 
 export const getCategory = (id: string) =>
   api.get(`${CATALOG_SERVICE}/categories/${id}`);
 
-export const updateProduct = (id: string, product: FormData) => {
+export const updateProduct = (product: FormData, id: string) => {
   return api.put(`${CATALOG_SERVICE}/products/${id}`, product, {
     headers: { "Content-Type": "multipart/form-data" },
   });
