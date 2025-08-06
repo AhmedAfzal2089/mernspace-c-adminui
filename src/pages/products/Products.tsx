@@ -20,14 +20,14 @@ import {
 } from "@ant-design/icons";
 import ProductsFilter from "./ProductsFilter";
 import { FieldData, Product } from "../../types";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   keepPreviousData,
   useMutation,
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-import { createProduct, getProducts } from "../../http/api";
+import { createProduct, getProducts, updateProduct } from "../../http/api";
 import { format } from "date-fns";
 import { debounce } from "lodash";
 import { PER_PAGE } from "../../constants";
@@ -86,6 +86,39 @@ const Products = () => {
   const [filterForm] = Form.useForm();
   const [form] = Form.useForm();
   const { user } = useAuthStore();
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  useEffect(() => {
+    if (selectedProduct) {
+      setDrawerOpen(true);
+      // converting to string because data coming from server is in another format
+      const priceConfiguration = Object.entries(
+        selectedProduct.priceConfiguration
+      ).reduce((acc, [key, value]) => {
+        const stringifiedKey = JSON.stringify({
+          configurationKey: key,
+          priceType: value.priceType,
+        });
+        return {
+          ...acc,
+          [stringifiedKey]: value.availableOptions,
+        };
+      }, {});
+      const attributes = selectedProduct.attributes.reduce((acc, item) => {
+        return {
+          ...acc,
+          [item.name]: item.value,
+        };
+      }, {});
+      form.setFieldsValue({
+        ...selectedProduct,
+        priceConfiguration,
+        attributes,
+        categoryId: selectedProduct.category._id,
+      });
+      // console.log("attributes", attributes);
+    }
+  }, [selectedProduct, form]);
+
   const [queryParams, setQueryParams] = useState({
     limit: PER_PAGE,
     page: 1,
@@ -144,8 +177,15 @@ const Products = () => {
   const queryClient = useQueryClient();
   const { mutate: productMutate, isPending: isCreateLoading } = useMutation({
     mutationKey: ["product"],
-    mutationFn: async (data: FormData) =>
-      createProduct(data).then((res) => res.data),
+    mutationFn: async (data: FormData) => {
+      if (selectedProduct) {
+        //edit mode
+        return updateProduct(selectedProduct._id, data).then((res) => res.data);
+      } else {
+        //create mode
+        return createProduct(data).then((res) => res.data);
+      }
+    },
     onSuccess: async () => {
       queryClient.invalidateQueries({ queryKey: ["products"] });
       form.resetFields();
@@ -180,7 +220,7 @@ const Products = () => {
       {} // for initial value in reduce method
     );
     console.log("submitting");
-    const categoryId = JSON.parse(form.getFieldValue("categoryId"))._id;
+    const categoryId = form.getFieldValue("categoryId");
     // const attrs = [
     //   { name: "Is Hit", value: true },
     //   { name: "Spiciness", value: "Hot" },
@@ -215,6 +255,7 @@ const Products = () => {
     const formData = makeFormData(postData);
     await productMutate(formData);
   };
+
   return (
     <>
       <Space direction="vertical" size="large" style={{ width: "100%" }}>
@@ -253,10 +294,15 @@ const Products = () => {
             ...columns,
             {
               title: "Actions",
-              render: () => {
+              render: (_, record: Product) => {
                 return (
                   <Space>
-                    <Button type="link" onClick={() => {}}>
+                    <Button
+                      type="link"
+                      onClick={() => {
+                        setSelectedProduct(record);
+                      }}
+                    >
                       Edit
                     </Button>
                   </Space>
@@ -286,12 +332,13 @@ const Products = () => {
           }}
         />
         <Drawer
-          title={"Add Product"}
+          title={selectedProduct ? "Update Product" : "Add Product"}
           width={720}
           styles={{ body: { background: colorBgLayout } }}
           open={DrawerOpen}
           destroyOnHidden={true}
           onClose={() => {
+            setSelectedProduct(null);
             form.resetFields();
             setDrawerOpen(false);
           }}
@@ -299,6 +346,7 @@ const Products = () => {
             <Space>
               <Button
                 onClick={() => {
+                  setSelectedProduct(null);
                   form.resetFields();
                   setDrawerOpen(false);
                 }}
@@ -318,7 +366,7 @@ const Products = () => {
           {/* // on submission we want data here so wrapping it on parent component */}
           {/* form={form} is coming from the above component */}
           <Form layout="vertical" form={form}>
-            <ProductForms />
+            <ProductForms form={form} />
           </Form>
         </Drawer>
       </Space>
