@@ -13,7 +13,6 @@ const NonAuth = () => {
   }
   return (
     <div>
-      <h1>Non AUth Component</h1>
       <Outlet />
     </div>
   );
