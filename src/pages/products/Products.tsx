@@ -142,7 +142,7 @@ const Products = () => {
   } = theme.useToken(); // theme coming from main.tsx
   const [DrawerOpen, setDrawerOpen] = useState(false);
   const queryClient = useQueryClient();
-  const { mutate: productMutate } = useMutation({
+  const { mutate: productMutate, isPending: isCreateLoading } = useMutation({
     mutationKey: ["product"],
     mutationFn: async (data: FormData) =>
       createProduct(data).then((res) => res.data),
@@ -301,7 +301,11 @@ const Products = () => {
               >
                 Cancel
               </Button>
-              <Button type="primary" onClick={onHandleSubmit}>
+              <Button
+                type="primary"
+                onClick={onHandleSubmit}
+                loading={isCreateLoading}
+              >
                 Submit
               </Button>
             </Space>

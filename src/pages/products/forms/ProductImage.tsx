@@ -35,7 +35,7 @@ const ProductImage = () => {
       <Upload listType="picture-card" {...uploaderConfig}>
         {contextHolder}
         {imageUrl ? (
-          <img src={imageUrl} alt="avatar" style={{ width: "50%" }} />
+          <img src={imageUrl} alt="avatar" style={{ width: "100%" }} />
         ) : (
           <Space direction="vertical">
             <PlusOutlined />
