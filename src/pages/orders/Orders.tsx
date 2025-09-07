@@ -5,6 +5,8 @@ import { Order } from "../../types";
 import { useQuery } from "@tanstack/react-query";
 import { getOrders } from "../../http/api";
 import { format } from "date-fns";
+import { colorMapping } from "../../constants";
+import { capitalizeFirst } from "../products/helpers";
 
 const columns = [
   {
@@ -61,7 +63,9 @@ const columns = [
     render: (_: boolean, record: Order) => {
       return (
         <>
-          <Tag color="green">{record.orderStatus.toUpperCase()}</Tag>
+          <Tag bordered={false} color={colorMapping[record.orderStatus]}>
+            {capitalizeFirst(record.orderStatus)}
+          </Tag>
         </>
       );
     },
