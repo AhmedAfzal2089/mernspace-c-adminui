@@ -4,6 +4,7 @@ import { api } from "./client";
 
 export const AUTH_SERVICE = "/api/auth";
 const CATALOG_SERVICE = "/api/catalog";
+const ORDER_SERVICE = "/api/order";
 
 export const login = (credentials: Credentials) =>
   api.post(`${AUTH_SERVICE}/auth/login`, credentials);
@@ -41,3 +42,8 @@ export const updateProduct = (product: FormData, id: string) => {
     headers: { "Content-Type": "multipart/form-data" },
   });
 };
+
+// order service
+
+export const getOrders = (queryString: string) =>
+  api.get(`${ORDER_SERVICE}/orders?${queryString}`);
