@@ -123,12 +123,15 @@ const SingleOrder = () => {
                   <List.Item.Meta
                     avatar={<Avatar src={item.image} />}
                     title={item.name}
-                    description={item.chosenConfiguration.selectedToppings[0]
-                      // todo: IMPORTANT: check why there is a nested array in selected toppings
-                      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                      // @ts-ignore
-                      .map((topping) => topping.name)
-                      .join(", ")}
+                    description={
+                      Array.isArray(
+                        item.chosenConfiguration?.selectedToppings
+                      ) && item.chosenConfiguration.selectedToppings.length > 0
+                        ? item.chosenConfiguration.selectedToppings
+                            .map((topping) => topping.name)
+                            .join(", ")
+                        : "No toppings selected"
+                    }
                   />
 
                   <Space size={"large"}>
